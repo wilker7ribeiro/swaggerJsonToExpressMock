@@ -6,3 +6,8 @@ var SwaggerMethodDefinition = /** @class */ (function () {
     return SwaggerMethodDefinition;
 }());
 exports.SwaggerMethodDefinition = SwaggerMethodDefinition;
+var SwaggerMethodDefinitionResponse = /** @class */ (function () {
+    function SwaggerMethodDefinitionResponse() {
+    }
+    return SwaggerMethodDefinitionResponse;
+}());

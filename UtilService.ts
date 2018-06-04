@@ -2,8 +2,11 @@ import { Service } from "./class/Service";
 import { SwaggerMethodDefinition } from "./class/swagger/SwaggerMethodDefinition";
 import { SwaggerEntidadePropriedade } from "./class/swagger/SwaggerEntidadePropriedade";
 import { Entidade } from "./class/Entidade";
-import { Propriedade } from "./class/Propriedade";
-
+import { Schema, TipoPropriedade } from "./class/Schema";
+import { SwaggerEntidade } from "./class/swagger/SwaggerEntidade";
+import { PathParam } from "./class/PathParam";
+import { APIDefinition } from "./class/ApiDefinition";
+const DEEP_LEVEL_DO_MOCK = 3;
 export class UtilService {
     static tagNameToServiceName(tagName: string): string {
         return tagName.split('-')
@@ -21,51 +24,49 @@ export class UtilService {
         return null;
     }
 
-    static getNomeRetornoFromMethodApi(methodApi: SwaggerMethodDefinition): string | null {
-        if (methodApi.responses[200] && methodApi.responses[200].items && methodApi.responses[200].items.$ref) {
-            var refString = methodApi.responses[200].schema.items.$ref
-            this.getEntidadeNameFromRef(refString);
-        }
-        return null;
-    }
-
     static getEntidadeNameFromRef(refString: string): string {
         var pathArray = refString.split('/')
         return pathArray[pathArray.length - 1]
     }
-    static isTipoPrimitivo(tipo: string): boolean {
-        return ["boolean", "string", "number", "date"].indexOf(tipo) !== -1;
-    }
-    static setJavascriptTypeBySwaggerPropriedade(propriedade: Propriedade, swaggerPropridade: SwaggerEntidadePropriedade): void {
 
+    static setSchemaTypeBySwaggerPropriedade(propriedade: Schema, swaggerPropridade: SwaggerEntidadePropriedade) {
+        propriedade.descricao = swaggerPropridade.description;
+        console.log(swaggerPropridade)
         if (swaggerPropridade.$ref) {
             propriedade.tipo = this.getEntidadeNameFromRef(swaggerPropridade.$ref)
             propriedade.isObjeto = true;
             return;
         }
         switch (swaggerPropridade.type) {
+            case "file":
+                propriedade.tipo = TipoPropriedade.FILE;
+                return;
             case "array":
-                propriedade.tipo = "array";
+                propriedade.isArray = true;
+                propriedade.tipo = TipoPropriedade.ARRAY;
+                propriedade.tipoArrayItem = new Schema();
+                this.setSchemaTypeBySwaggerPropriedade(propriedade.tipoArrayItem, swaggerPropridade.items);
                 return;
             case "boolean":
-                propriedade.tipo = "boolean";
+                propriedade.tipo = TipoPropriedade.BOOLEAN;
                 return;
             case "string":
 
                 switch (swaggerPropridade.format) {
                     case "date-time":
-                        propriedade.tipo = "date";
+                        propriedade.tipo = TipoPropriedade.DATE;
                         return;
                     default:
-                        propriedade.tipo = "string";
+                        propriedade.tipo = TipoPropriedade.STRING;
                         return;
                 }
 
+            case "number":
             case "integer":
-                propriedade.tipo = "number";
+                propriedade.tipo = TipoPropriedade.NUMBER;
                 return;
             default:
-                propriedade.tipo = "any";
+                propriedade.tipo = TipoPropriedade.ANY;
                 return;
         }
     }
@@ -80,6 +81,139 @@ export class UtilService {
 
     static pathSwaggerToExpressPath(swaggerPath: string): string {
         return swaggerPath.replace(/\{([^\}]+)\}/g, ":$1")
+    }
+
+    static criarJavascriptValuePeloSchema(entidades: Entidade[], propriedade: Schema, deepLevel: number): any {
+        console.log(propriedade.nome, deepLevel)
+        if (propriedade.isObjeto) {
+            if (deepLevel == DEEP_LEVEL_DO_MOCK) {
+                return null
+            }
+            return this.criarEntidadeObjByNome(entidades, propriedade.tipo, deepLevel + 1);
+        } else if (propriedade.isArray) {
+            if (deepLevel == DEEP_LEVEL_DO_MOCK) {
+                return []
+            }
+            return [this.criarJavascriptValuePeloSchema(entidades, propriedade.tipoArrayItem, deepLevel)]
+        } else {
+            return this.criarJavascriptValuePeloSchemaPrimitivo(entidades, propriedade.tipo);
+        }
+    }
+    static criarJavascriptValuePeloSchemaPrimitivo(entidades: Entidade[], tipoPropriedade: string | TipoPropriedade): any {
+        switch (tipoPropriedade) {
+            case TipoPropriedade.BOOLEAN:
+                return false;
+            case TipoPropriedade.DATE:
+                return new Date();
+            case TipoPropriedade.NUMBER:
+                return 10
+            case TipoPropriedade.STRING:
+                return "String";
+            case TipoPropriedade.FILE:
+                return "FILE BASE64";
+            case TipoPropriedade.ANY:
+                return null;
+        }
+    }
+    static criarEntidadeObjByNome(entidades: Entidade[], nomeEntidade: string, deepLevel: number): any {
+        let entidade = this.findEntidadePorNome(entidades, nomeEntidade);
+        if (entidade) {
+            return this.criarEntidadeObj(entidades, entidade, deepLevel)
+        }
+        return {};
+    }
+
+    static criarEntidadeObj(entidades: Entidade[], entidade: Entidade, deepLevel: number): any {
+        let obj: any = {};
+        if (entidade) {
+            entidade.propriedades.forEach(propriedade => {
+                obj[propriedade.nome] = this.criarJavascriptValuePeloSchema(entidades, propriedade, deepLevel);
+            });
+        } else {
+            return {};
+        }
+        return obj
+    }
+
+    static converterEntidadeFromSwaggerEntidade(entidadeName: string, swaggerEntidade: SwaggerEntidade): Entidade {
+        let entidade = new Entidade();
+        entidade.nome = entidadeName;
+        entidade.propriedades = []
+        var swaggerPropriedades = swaggerEntidade.properties;
+        for (const propriedadeName in swaggerPropriedades) {
+            if (swaggerPropriedades.hasOwnProperty(propriedadeName)) {
+                var propriedade = new Schema();
+                propriedade.nome = propriedadeName;
+                const swaggerPropriedade = swaggerPropriedades[propriedadeName];
+                UtilService.setSchemaTypeBySwaggerPropriedade(propriedade, swaggerPropriedade);
+                entidade.propriedades.push(propriedade);
+            }
+        }
+        return entidade;
+    }
+
+    static getResponseSchemaFromSwaggerMethodDefinition(swaggerMethod: SwaggerMethodDefinition): Schema | null {
+        if (swaggerMethod.responses[200]) {
+            return this.converterSwaggerSchemaInSchema(swaggerMethod.responses[200].schema)
+        }
+        return null;
+    }
+    static converterSwaggerSchemaInSchema(swaggerSchema: SwaggerEntidadePropriedade): Schema {
+        var schema = new Schema();
+        this.setSchemaTypeBySwaggerPropriedade(schema, swaggerSchema);
+        return schema;
+    }
+
+    static getBodyParamSchemeFromSwaggerMethodDefinition(swaggerMethod: SwaggerMethodDefinition): Schema | null {
+        var bodyParam = this.getBodyParameterFromSwaggerMethodDefinitionParameters(swaggerMethod.parameters);
+        if (bodyParam) {
+            var schema = new Schema();
+            this.setSchemaTypeBySwaggerPropriedade(schema, bodyParam);
+            return schema;
+        }
+        return null;
+    }
+    static getBodyParameterFromSwaggerMethodDefinitionParameters(parameters: SwaggerEntidadePropriedade[] = []): SwaggerEntidadePropriedade | null {
+        for (let i = 0; i < parameters.length; i++) {
+            const parameter = parameters[i];
+            if (parameter.in == "body") {
+                return parameter;
+            }
+        }
+        return null;
+    }
+
+    static getPathParamsFromSwaggerMethodDefinition(swaggerMethod: SwaggerMethodDefinition): PathParam[] {
+        if (!swaggerMethod.parameters) {
+            return [];
+        }
+        return swaggerMethod.parameters
+            .filter(param => param.in === 'path')
+            .map(param => {
+                return {
+                    nome: param.name,
+                    obrigatorio: param.required,
+                    descricao: param.description
+                };
+            })
+    }
+
+    static getApiDefinitionFromSwaggerMethodDefinition(methodType: string, requestPath: string, swaggerMethodApi: SwaggerMethodDefinition): APIDefinition {
+        var api: APIDefinition = new APIDefinition();
+        api.metodo = methodType;
+        api.resumo = swaggerMethodApi.sumary;
+        api.descricao = swaggerMethodApi.description;
+        api.path = requestPath;
+        api.pathParams = UtilService.getPathParamsFromSwaggerMethodDefinition(swaggerMethodApi);
+        let saidaSchema = UtilService.getResponseSchemaFromSwaggerMethodDefinition(swaggerMethodApi);
+        if (saidaSchema) {
+            api.saida = saidaSchema;
+        }
+        let entradaSchema = UtilService.getBodyParamSchemeFromSwaggerMethodDefinition(swaggerMethodApi);
+        if (entradaSchema) {
+            api.entrada = entradaSchema;
+        }
+        return api;
     }
 
 }

@@ -1,10 +1,12 @@
-import { Entidade } from "./Entidade";
+import { Schema } from "./Schema";
 import { PathParam } from "./PathParam";
 
 export class APIDefinition {
     path: string;
     metodo: string;
+    resumo: string;
+    descricao: string;
     pathParams: PathParam[];
-    saida: Entidade;
-    entrada: Entidade;
+    saida: Schema;
+    entrada: Schema;
 }

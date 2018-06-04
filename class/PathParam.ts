@@ -1,4 +1,5 @@
 export class PathParam {
     nome: string;
-    obrigatorio: boolean
+    obrigatorio: boolean;
+    descricao: string;
 }

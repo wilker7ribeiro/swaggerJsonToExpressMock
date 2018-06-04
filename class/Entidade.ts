@@ -1,6 +1,6 @@
-import { Propriedade } from "./Propriedade";
+import { Schema } from "./Schema";
 
 export class Entidade {
     nome: string;
-    propriedades: Propriedade[]
+    propriedades: Schema[]
 }
