@@ -46,7 +46,7 @@ export abstract class ModuleManager {
                 ModuleManager.servicos.forEach(service => {
                     ModuleManager.inicializarRotas(service)
                 });
-                cb(app)
+                cb()
             })
 
         })
