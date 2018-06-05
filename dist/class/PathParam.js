@@ -6,3 +6,8 @@ var PathParam = /** @class */ (function () {
     return PathParam;
 }());
 exports.PathParam = PathParam;
+var PathParamTipo;
+(function (PathParamTipo) {
+    PathParamTipo["NUMBER"] = "number";
+    PathParamTipo["STRING"] = "string";
+})(PathParamTipo = exports.PathParamTipo || (exports.PathParamTipo = {}));

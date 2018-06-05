@@ -65,24 +65,28 @@ var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
             }
         }
 
+
         // console.log(JSON.stringify(servicos));
         servicos.forEach(servico => {
             if (servico.apis.length) {
                 // var servico = servicos[0];
-                var writerStream = fs.createWriteStream(`./api/${servico.nome}.js`, { flags: 'w' })
+                var writerStream = fs.createWriteStream(`./server/api/${servico.nome}.js`, { flags: 'w' })
                     .on('finish', function () {
                         console.log("Write Finish.");
                     })
                     .on('error', function (err) {
                         console.log(err.stack);
                     });
+
+                writerStream.write(`module.exports =  function ${servico.nome.replace(" ", "")}(app) {\n\n`)
                 servico.apis.forEach(api => {
                     writerStream.write(WriterService.getTemplateForApi(requestTemplateString, api, entidades));
                 })
-
+                writerStream.write('}')
                 writerStream.end();
             }
         })
+
 
         // Mark the end of file
         // });

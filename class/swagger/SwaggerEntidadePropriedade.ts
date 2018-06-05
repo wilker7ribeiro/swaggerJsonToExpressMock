@@ -1,5 +1,5 @@
 export class SwaggerEntidadePropriedade {
-    "type": string | "integer" | "number" | "string" | "boolean" | "array" | "file";  
+    "type": string | SwaggerEntidadeType
     "format": string | "int64" | "date-time";
     "items": SwaggerEntidadePropriedade;
     "description": string;
@@ -10,3 +10,12 @@ export class SwaggerEntidadePropriedade {
     "enum": string[];
     "schema": SwaggerEntidadePropriedade;
 };
+
+export enum SwaggerEntidadeType {
+    INTEGER = "integer",
+    NUMBER = "number",
+    STRING = "string",
+    BOOLEAN = "boolean",
+    ARRAY = "array",
+    FILE = "file"
+}

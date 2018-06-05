@@ -14,7 +14,7 @@ export class WriterService {
     static criarRequestTemplateVariables(api: APIDefinition, entidades: Entidade[]): RequestTemplateVariables {
         var requestTemplateVariables = new RequestTemplateVariables();
         requestTemplateVariables.requestMethod = api.metodo;
-        requestTemplateVariables.requestUrl = UtilService.pathSwaggerToExpressPath(api.path);
+        requestTemplateVariables.requestUrl = UtilService.pathSwaggerToExpressPath(api);
         if (api.saida) {
             requestTemplateVariables.responseObj = UtilService.criarJavascriptValuePeloSchema(entidades, api.saida, 1);
         }
@@ -27,7 +27,7 @@ export class WriterService {
         if (rtv.responseObj) {
             template += `
             var obj = ${JSON.stringify(rtv.responseObj, null, 2)}
-            res.send(obj)
+            res.json(obj)
             `
         } else {
             template += `res.sendStatus(200)`

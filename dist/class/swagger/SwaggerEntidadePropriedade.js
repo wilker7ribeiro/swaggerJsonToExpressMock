@@ -7,3 +7,12 @@ var SwaggerEntidadePropriedade = /** @class */ (function () {
 }());
 exports.SwaggerEntidadePropriedade = SwaggerEntidadePropriedade;
 ;
+var SwaggerEntidadeType;
+(function (SwaggerEntidadeType) {
+    SwaggerEntidadeType["INTEGER"] = "integer";
+    SwaggerEntidadeType["NUMBER"] = "number";
+    SwaggerEntidadeType["STRING"] = "string";
+    SwaggerEntidadeType["BOOLEAN"] = "boolean";
+    SwaggerEntidadeType["ARRAY"] = "array";
+    SwaggerEntidadeType["FILE"] = "file";
+})(SwaggerEntidadeType = exports.SwaggerEntidadeType || (exports.SwaggerEntidadeType = {}));

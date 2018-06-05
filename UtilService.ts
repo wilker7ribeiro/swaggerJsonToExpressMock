@@ -1,10 +1,10 @@
 import { Service } from "./class/Service";
 import { SwaggerMethodDefinition } from "./class/swagger/SwaggerMethodDefinition";
-import { SwaggerEntidadePropriedade } from "./class/swagger/SwaggerEntidadePropriedade";
+import { SwaggerEntidadePropriedade, SwaggerEntidadeType } from "./class/swagger/SwaggerEntidadePropriedade";
 import { Entidade } from "./class/Entidade";
 import { Schema, TipoPropriedade } from "./class/Schema";
 import { SwaggerEntidade } from "./class/swagger/SwaggerEntidade";
-import { PathParam } from "./class/PathParam";
+import { PathParam, PathParamTipo } from "./class/PathParam";
 import { APIDefinition } from "./class/ApiDefinition";
 const DEEP_LEVEL_DO_MOCK = 3;
 export class UtilService {
@@ -31,7 +31,6 @@ export class UtilService {
 
     static setSchemaTypeBySwaggerPropriedade(propriedade: Schema, swaggerPropridade: SwaggerEntidadePropriedade) {
         propriedade.descricao = swaggerPropridade.description;
-        console.log(swaggerPropridade)
         if (swaggerPropridade.$ref) {
             propriedade.tipo = this.getEntidadeNameFromRef(swaggerPropridade.$ref)
             propriedade.isObjeto = true;
@@ -79,12 +78,22 @@ export class UtilService {
         return null;
     }
 
-    static pathSwaggerToExpressPath(swaggerPath: string): string {
-        return swaggerPath.replace(/\{([^\}]+)\}/g, ":$1")
+    static pathSwaggerToExpressPath(api: APIDefinition): string {
+        return api.path.replace(/\{([^\}]+)\}/g, (fullMatch: string, idPathParam: string) => {
+            return this.getRegexForPathParam(api.pathParams.filter(pathParam => pathParam.nome === idPathParam)[0])
+        })
+    }
+    static getRegexForPathParam(pathParam: PathParam): string {
+        switch (pathParam.tipo) {
+            case PathParamTipo.NUMBER:
+                return `:${pathParam.nome}(\\\\d+)`;
+            case PathParamTipo.STRING:
+            default:
+                return `:${pathParam.nome}`
+        }
     }
 
     static criarJavascriptValuePeloSchema(entidades: Entidade[], propriedade: Schema, deepLevel: number): any {
-        console.log(propriedade.nome, deepLevel)
         if (propriedade.isObjeto) {
             if (deepLevel == DEEP_LEVEL_DO_MOCK) {
                 return null
@@ -193,9 +202,23 @@ export class UtilService {
                 return {
                     nome: param.name,
                     obrigatorio: param.required,
-                    descricao: param.description
+                    descricao: param.description,
+                    tipo: this.getPathParamTipo(param.type)
                 };
             })
+    }
+
+    static getPathParamTipo(paramType: string | SwaggerEntidadeType): PathParamTipo {
+        switch (paramType) {
+            case SwaggerEntidadeType.STRING:
+                return PathParamTipo.STRING;
+            case SwaggerEntidadeType.INTEGER:
+            case SwaggerEntidadeType.NUMBER:
+                return PathParamTipo.NUMBER;
+            default:
+                return PathParamTipo.NUMBER
+        }
+
     }
 
     static getApiDefinitionFromSwaggerMethodDefinition(methodType: string, requestPath: string, swaggerMethodApi: SwaggerMethodDefinition): APIDefinition {

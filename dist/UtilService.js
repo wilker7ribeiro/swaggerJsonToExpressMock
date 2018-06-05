@@ -1,7 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var SwaggerEntidadePropriedade_1 = require("./class/swagger/SwaggerEntidadePropriedade");
 var Entidade_1 = require("./class/Entidade");
 var Schema_1 = require("./class/Schema");
+var PathParam_1 = require("./class/PathParam");
 var ApiDefinition_1 = require("./class/ApiDefinition");
 var DEEP_LEVEL_DO_MOCK = 3;
 var UtilService = /** @class */ (function () {
@@ -27,7 +29,6 @@ var UtilService = /** @class */ (function () {
     };
     UtilService.setSchemaTypeBySwaggerPropriedade = function (propriedade, swaggerPropridade) {
         propriedade.descricao = swaggerPropridade.description;
-        console.log(swaggerPropridade);
         if (swaggerPropridade.$ref) {
             propriedade.tipo = this.getEntidadeNameFromRef(swaggerPropridade.$ref);
             propriedade.isObjeto = true;
@@ -72,11 +73,22 @@ var UtilService = /** @class */ (function () {
         }
         return null;
     };
-    UtilService.pathSwaggerToExpressPath = function (swaggerPath) {
-        return swaggerPath.replace(/\{([^\}]+)\}/g, ":$1");
+    UtilService.pathSwaggerToExpressPath = function (api) {
+        var _this = this;
+        return api.path.replace(/\{([^\}]+)\}/g, function (fullMatch, idPathParam) {
+            return _this.getRegexForPathParam(api.pathParams.filter(function (pathParam) { return pathParam.nome === idPathParam; })[0]);
+        });
+    };
+    UtilService.getRegexForPathParam = function (pathParam) {
+        switch (pathParam.tipo) {
+            case PathParam_1.PathParamTipo.NUMBER:
+                return ":" + pathParam.nome + "(\\\\d+)";
+            case PathParam_1.PathParamTipo.STRING:
+            default:
+                return ":" + pathParam.nome;
+        }
     };
     UtilService.criarJavascriptValuePeloSchema = function (entidades, propriedade, deepLevel) {
-        console.log(propriedade.nome, deepLevel);
         if (propriedade.isObjeto) {
             if (deepLevel == DEEP_LEVEL_DO_MOCK) {
                 return null;
@@ -176,6 +188,7 @@ var UtilService = /** @class */ (function () {
         return null;
     };
     UtilService.getPathParamsFromSwaggerMethodDefinition = function (swaggerMethod) {
+        var _this = this;
         if (!swaggerMethod.parameters) {
             return [];
         }
@@ -185,9 +198,21 @@ var UtilService = /** @class */ (function () {
             return {
                 nome: param.name,
                 obrigatorio: param.required,
-                descricao: param.description
+                descricao: param.description,
+                tipo: _this.getPathParamTipo(param.type)
             };
         });
+    };
+    UtilService.getPathParamTipo = function (paramType) {
+        switch (paramType) {
+            case SwaggerEntidadePropriedade_1.SwaggerEntidadeType.STRING:
+                return PathParam_1.PathParamTipo.STRING;
+            case SwaggerEntidadePropriedade_1.SwaggerEntidadeType.INTEGER:
+            case SwaggerEntidadePropriedade_1.SwaggerEntidadeType.NUMBER:
+                return PathParam_1.PathParamTipo.NUMBER;
+            default:
+                return PathParam_1.PathParamTipo.NUMBER;
+        }
     };
     UtilService.getApiDefinitionFromSwaggerMethodDefinition = function (methodType, requestPath, swaggerMethodApi) {
         var api = new ApiDefinition_1.APIDefinition();
