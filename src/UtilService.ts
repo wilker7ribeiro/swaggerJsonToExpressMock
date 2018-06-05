@@ -94,11 +94,11 @@ export class UtilService {
             }
             return [this.criarJavascriptValuePeloSchema(entidades, propriedade.tipoArrayItem, deepLevel)]
         } else {
-            return this.criarJavascriptValuePeloSchemaPrimitivo(entidades, propriedade.tipo);
+            return this.criarJavascriptValuePeloSchemaPrimitivo(entidades, propriedade);
         }
     }
-    static criarJavascriptValuePeloSchemaPrimitivo(entidades: Entidade[], tipoPropriedade: string | TipoPropriedade): any {
-        switch (tipoPropriedade) {
+    static criarJavascriptValuePeloSchemaPrimitivo(entidades: Entidade[], propriedade: Schema): any {
+        switch (propriedade.tipo) {
             case TipoPropriedade.BOOLEAN:
                 return false;
             case TipoPropriedade.DATE:
@@ -106,7 +106,7 @@ export class UtilService {
             case TipoPropriedade.NUMBER:
                 return 10
             case TipoPropriedade.STRING:
-                return "String";
+                return propriedade.nome || "resultado";
             case TipoPropriedade.FILE:
                 return "FILE BASE64";
             case TipoPropriedade.ANY:
@@ -229,4 +229,32 @@ export class UtilService {
         return api;
     }
 
+    static stringifyWithDates(any: any): any {
+        if (any === undefined || any === null) {
+            return null
+        }
+        if (Array.isArray(any)) {
+            return `[ ${any.map(UtilService.stringifyWithDates).join(', ')} ]`
+        }
+        if(any instanceof Date){
+            return `new Date(${any.getMilliseconds()})`
+        }
+        if(typeof any === "object"){
+            let string = '{\n'
+            for (const propertyName in any) {
+                if (any.hasOwnProperty(propertyName)) {
+                    const propertyValue = any[propertyName];
+                    string+= `  ${propertyName}: ${UtilService.stringifyWithDates(propertyValue)},\n`
+                }
+            }
+            var result = string.substring(0, string.length -2) + "\n}";;
+            console.log(result)
+            return result;
+            
+        }
+        if(typeof any === 'string'){
+            return `"${any}"`
+        }
+        return any;
+    }
 }

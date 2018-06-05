@@ -9,7 +9,6 @@ import { PathParam, PathParamTipo } from "./class/PathParam";
 import { WriterUtil } from "./WriterUtil";
 var jsBeautify = require('js-beautify').js_beautify
 
-const regexReplaceTemplate = /<% *([^ *%>]+) %>/g;
 export class WriterService {
     entidades: Entidade[] = [];
     writeService(writeStream: WriteStream, servico: Service) {
@@ -50,13 +49,13 @@ export class WriterService {
         }
         template += `\t};`;
 
-        return template+'\n\n'
+        return template + '\n\n'
 
     }
 
     getBodyTemplate(schemaSaida: Schema) {
         var variableName = ''
-        var variableInitialization = JSON.stringify(UtilService.criarJavascriptValuePeloSchema(this.entidades, schemaSaida, 1), null, 2);
+        var variableInitialization = UtilService.stringifyWithDates(UtilService.criarJavascriptValuePeloSchema(this.entidades, schemaSaida, 1));
         if (schemaSaida.isArray) {
             if (schemaSaida.tipoArrayItem.isArray) {
                 variableName = 'list';
@@ -66,44 +65,6 @@ export class WriterService {
         } else {
             variableName = WriterUtil.toCamelCase(schemaSaida.tipo);
         }
-        return `\t\tvar ${variableName}: ${WriterUtil.getTypescriptTypingForPropriedade(schemaSaida)} = ${variableInitialization}\n`+`\t\tres.json(${variableName})\n`
+        return `\t\tvar ${variableName}: ${WriterUtil.getTypescriptTypingForPropriedade(schemaSaida)} = ${variableInitialization}\n` + `\t\tres.json(${variableName})\n`
     }
-
-    getJavascriptVariableInitializationStringForTipo(propriedade: Schema): string {
-        if (propriedade.isObjeto) {
-            return `new ${propriedade.tipo}()`
-        } else if (propriedade.isArray) {
-            return `[${this.getJavascriptVariableInitializationStringForTipo(propriedade.tipoArrayItem)}]`
-        }
-        switch (propriedade.tipo) {
-            case TipoPropriedade.BOOLEAN:
-                return 'false';
-            case TipoPropriedade.DATE:
-                return 'new Date()';
-            case TipoPropriedade.NUMBER:
-                return '10'
-            case TipoPropriedade.STRING:
-                return "String";
-            case TipoPropriedade.FILE:
-                return "FILE BASE64";
-            case TipoPropriedade.ANY:
-                return '{}';
-            default:
-                return 'null'
-
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
