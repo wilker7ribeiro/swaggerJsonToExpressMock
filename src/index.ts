@@ -9,6 +9,7 @@ import { APIDefinition } from "./class/ApiDefinition";
 import { Entidade } from "./class/Entidade";
 import { Readable, Writable } from "stream";
 import { WriterService } from "./WriterService";
+import { WriterEntity } from "./WriterEntity";
 
 // var swaggerJson = require('./swagger.json')
 
@@ -17,13 +18,6 @@ import { WriterService } from "./WriterService";
 var servicos: Service[] = []
 var entidades: Entidade[] = [];
 
-class ServiceStream extends Writable {
-    _write(chunk: any, encoding: string, done: any) {
-        console.log(chunk);
-        done()
-    }
-}
-var requestTemplateString = fs.readFileSync('./request-template.template').toString();
 var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
     .pipe(JSONStream.parse(null))
     .pipe(es.map(function (swaggerJson: any, cb: any) {
@@ -64,28 +58,39 @@ var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
                 }
             }
         }
+        entidades.forEach(entidade => {
+            // var servico = servicos[0];
+            var writerStream = fs.createWriteStream(`./src/server/entidade/${entidade.nome}.ts`, { flags: 'w' })
+                .on('finish', function () {
+                    console.log("Write Finish.");
+                })
+                .on('error', function (err) {
+                    console.log(err.stack);
+                });
+            var entityWriter = new WriterEntity()
+            entityWriter.writeEntity(writerStream, entidade)
+            writerStream.end();
 
-
+        })
         // console.log(JSON.stringify(servicos));
         servicos.forEach(servico => {
             if (servico.apis.length) {
                 // var servico = servicos[0];
-                var writerStream = fs.createWriteStream(`./server/api/${servico.nome}.js`, { flags: 'w' })
+                var writerStream = fs.createWriteStream(`./src/server/api/${servico.nome}.ts`, { flags: 'w' })
                     .on('finish', function () {
                         console.log("Write Finish.");
                     })
                     .on('error', function (err) {
                         console.log(err.stack);
                     });
-
-                writerStream.write(`module.exports =  function ${servico.nome.replace(" ", "")}(app) {\n\n`)
-                servico.apis.forEach(api => {
-                    writerStream.write(WriterService.getTemplateForApi(requestTemplateString, api, entidades));
-                })
-                writerStream.write('}')
+                var serviceWriter = new WriterService()
+                serviceWriter.entidades = entidades;
+                serviceWriter.writeService(writerStream, servico);
                 writerStream.end();
             }
         })
+
+
 
 
         // Mark the end of file
@@ -93,6 +98,5 @@ var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
         cb(null)
 
     }))
-    .pipe(new ServiceStream())
 
 setInterval(() => { }, 1 << 30);

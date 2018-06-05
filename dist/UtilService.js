@@ -34,6 +34,7 @@ var UtilService = /** @class */ (function () {
             propriedade.isObjeto = true;
             return;
         }
+        /** @todo em algum momento pode cair como type "object" sem ter o $ref, acho que é quando é objetos dinamicos, nesse caso não sei a resposta */
         switch (swaggerPropridade.type) {
             case "file":
                 propriedade.tipo = Schema_1.TipoPropriedade.FILE;
@@ -72,21 +73,6 @@ var UtilService = /** @class */ (function () {
                 return entidade;
         }
         return null;
-    };
-    UtilService.pathSwaggerToExpressPath = function (api) {
-        var _this = this;
-        return api.path.replace(/\{([^\}]+)\}/g, function (fullMatch, idPathParam) {
-            return _this.getRegexForPathParam(api.pathParams.filter(function (pathParam) { return pathParam.nome === idPathParam; })[0]);
-        });
-    };
-    UtilService.getRegexForPathParam = function (pathParam) {
-        switch (pathParam.tipo) {
-            case PathParam_1.PathParamTipo.NUMBER:
-                return ":" + pathParam.nome + "(\\\\d+)";
-            case PathParam_1.PathParamTipo.STRING:
-            default:
-                return ":" + pathParam.nome;
-        }
     };
     UtilService.criarJavascriptValuePeloSchema = function (entidades, propriedade, deepLevel) {
         if (propriedade.isObjeto) {
@@ -219,6 +205,7 @@ var UtilService = /** @class */ (function () {
         api.metodo = methodType;
         api.resumo = swaggerMethodApi.sumary;
         api.descricao = swaggerMethodApi.description;
+        api.nomeMetodo = swaggerMethodApi.operationId;
         api.path = requestPath;
         api.pathParams = UtilService.getPathParamsFromSwaggerMethodDefinition(swaggerMethodApi);
         var saidaSchema = UtilService.getResponseSchemaFromSwaggerMethodDefinition(swaggerMethodApi);

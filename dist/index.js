@@ -1,14 +1,4 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
@@ -22,24 +12,12 @@ var JSONStream = __importStar(require("JSONStream"));
 var es = __importStar(require("event-stream"));
 var Service_1 = require("./class/Service");
 var UtilService_1 = require("./UtilService");
-var stream_1 = require("stream");
 var WriterService_1 = require("./WriterService");
+var WriterEntity_1 = require("./WriterEntity");
 // var swaggerJson = require('./swagger.json')
 // var agrupamentosServicos: any = {}
 var servicos = [];
 var entidades = [];
-var ServiceStream = /** @class */ (function (_super) {
-    __extends(ServiceStream, _super);
-    function ServiceStream() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    ServiceStream.prototype._write = function (chunk, encoding, done) {
-        console.log(chunk);
-        done();
-    };
-    return ServiceStream;
-}(stream_1.Writable));
-var requestTemplateString = fs.readFileSync('./request-template.template').toString();
 var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
     .pipe(JSONStream.parse(null))
     .pipe(es.map(function (swaggerJson, cb) {
@@ -77,28 +55,38 @@ var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
             }
         }
     }
+    entidades.forEach(function (entidade) {
+        // var servico = servicos[0];
+        var writerStream = fs.createWriteStream("./src/server/entidade/" + entidade.nome + ".ts", { flags: 'w' })
+            .on('finish', function () {
+            console.log("Write Finish.");
+        })
+            .on('error', function (err) {
+            console.log(err.stack);
+        });
+        var entityWriter = new WriterEntity_1.WriterEntity();
+        entityWriter.writeEntity(writerStream, entidade);
+        writerStream.end();
+    });
     // console.log(JSON.stringify(servicos));
     servicos.forEach(function (servico) {
         if (servico.apis.length) {
             // var servico = servicos[0];
-            var writerStream = fs.createWriteStream("./server/api/" + servico.nome + ".js", { flags: 'w' })
+            var writerStream = fs.createWriteStream("./src/server/api/" + servico.nome + ".ts", { flags: 'w' })
                 .on('finish', function () {
                 console.log("Write Finish.");
             })
                 .on('error', function (err) {
                 console.log(err.stack);
             });
-            writerStream.write("module.exports =  function " + servico.nome.replace(" ", "") + "(app) {\n\n");
-            servico.apis.forEach(function (api) {
-                writerStream.write(WriterService_1.WriterService.getTemplateForApi(requestTemplateString, api, entidades));
-            });
-            writerStream.write('}');
+            var serviceWriter = new WriterService_1.WriterService();
+            serviceWriter.entidades = entidades;
+            serviceWriter.writeService(writerStream, servico);
             writerStream.end();
         }
     });
     // Mark the end of file
     // });
     cb(null);
-}))
-    .pipe(new ServiceStream());
+}));
 setInterval(function () { }, 1 << 30);

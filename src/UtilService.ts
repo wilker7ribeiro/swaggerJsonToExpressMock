@@ -36,6 +36,7 @@ export class UtilService {
             propriedade.isObjeto = true;
             return;
         }
+        /** @todo em algum momento pode cair como type "object" sem ter o $ref, acho que é quando é objetos dinamicos, nesse caso não sei a resposta */
         switch (swaggerPropridade.type) {
             case "file":
                 propriedade.tipo = TipoPropriedade.FILE;
@@ -78,20 +79,8 @@ export class UtilService {
         return null;
     }
 
-    static pathSwaggerToExpressPath(api: APIDefinition): string {
-        return api.path.replace(/\{([^\}]+)\}/g, (fullMatch: string, idPathParam: string) => {
-            return this.getRegexForPathParam(api.pathParams.filter(pathParam => pathParam.nome === idPathParam)[0])
-        })
-    }
-    static getRegexForPathParam(pathParam: PathParam): string {
-        switch (pathParam.tipo) {
-            case PathParamTipo.NUMBER:
-                return `:${pathParam.nome}(\\\\d+)`;
-            case PathParamTipo.STRING:
-            default:
-                return `:${pathParam.nome}`
-        }
-    }
+
+
 
     static criarJavascriptValuePeloSchema(entidades: Entidade[], propriedade: Schema, deepLevel: number): any {
         if (propriedade.isObjeto) {
@@ -226,6 +215,7 @@ export class UtilService {
         api.metodo = methodType;
         api.resumo = swaggerMethodApi.sumary;
         api.descricao = swaggerMethodApi.description;
+        api.nomeMetodo = swaggerMethodApi.operationId;
         api.path = requestPath;
         api.pathParams = UtilService.getPathParamsFromSwaggerMethodDefinition(swaggerMethodApi);
         let saidaSchema = UtilService.getResponseSchemaFromSwaggerMethodDefinition(swaggerMethodApi);

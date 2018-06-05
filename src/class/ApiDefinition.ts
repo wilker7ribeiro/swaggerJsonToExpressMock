@@ -2,6 +2,7 @@ import { Schema } from "./Schema";
 import { PathParam } from "./PathParam";
 
 export class APIDefinition {
+    nomeMetodo: string;
     path: string;
     metodo: string;
     resumo: string;
