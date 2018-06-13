@@ -9,7 +9,7 @@ import { PathParam, PathParamTipo } from "./class/PathParam";
 import { WriterUtil } from "./WriterUtil";
 import jsBeautify = require('js-beautify')
 
-export class WriterEntity {
+export class WriterTSEntity {
 
     writeEntity(writeStream: WriteStream, entidade: Entidade) {
         this.getSchemasUtilizados(entidade).forEach(schema => {

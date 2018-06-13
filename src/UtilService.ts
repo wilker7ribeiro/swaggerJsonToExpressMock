@@ -237,7 +237,7 @@ export class UtilService {
             return `[ ${any.map(UtilService.stringifyWithDates).join(', ')} ]`
         }
         if(any instanceof Date){
-            return `new Date(${any.getMilliseconds()})`
+            return `new Date(${any.getTime()})`
         }
         if(typeof any === "object"){
             let string = '{\n'

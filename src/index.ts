@@ -8,8 +8,9 @@ import { SwaggerEntidade } from "./class/swagger/SwaggerEntidade";
 import { APIDefinition } from "./class/ApiDefinition";
 import { Entidade } from "./class/Entidade";
 import { Readable, Writable } from "stream";
-import { WriterService } from "./WriterService";
-import { WriterEntity } from "./WriterEntity";
+import { WriterTSService } from "./WriterTSService";
+import { WriterTSEntity } from "./WriterTSEntity";
+import { AgnularWriterEntityFactory } from "./AgnularWriterEntityFactory";
 
 // var swaggerJson = require('./swagger.json')
 
@@ -58,35 +59,49 @@ var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
                 }
             }
         }
+
+        // APOS MAPEAR
+
         entidades.forEach(entidade => {
-            // var servico = servicos[0];
-            var writerStream = fs.createWriteStream(`./src/server/entidade/${entidade.nome}.ts`, { flags: 'w' })
+            var servico = servicos[0];
+            var writerStreamTSEntity = fs.createWriteStream(`./src/server/entidade/${entidade.nome}.ts`, { flags: 'w' })
                 .on('finish', function () {
                     console.log("Write Finish.");
                 })
                 .on('error', function (err) {
                     console.log(err.stack);
                 });
-            var entityWriter = new WriterEntity()
-            entityWriter.writeEntity(writerStream, entidade)
-            writerStream.end();
+            var entityWriter = new WriterTSEntity()
+            entityWriter.writeEntity(writerStreamTSEntity, entidade)
+            writerStreamTSEntity.end();
+
+            var writerStreamAngular = fs.createWriteStream(`./src/cliente/entidade/${entidade.nome}.js`, { flags: 'w' })
+                .on('finish', function () {
+                    console.log("Write Finish.");
+                })
+                .on('error', function (err) {
+                    console.log(err.stack);
+                });
+            var angularFactoryWriter = new AgnularWriterEntityFactory()
+            angularFactoryWriter.writeEntity(writerStreamAngular, entidade, entidades)
+            writerStreamAngular.end();
+
 
         })
         // console.log(JSON.stringify(servicos));
         servicos.forEach(servico => {
             if (servico.apis.length) {
-                // var servico = servicos[0];
-                var writerStream = fs.createWriteStream(`./src/server/api/${servico.nome}.ts`, { flags: 'w' })
+                var writerStreamTSService = fs.createWriteStream(`./src/server/api/${servico.nome}.ts`, { flags: 'w' })
                     .on('finish', function () {
                         console.log("Write Finish.");
                     })
                     .on('error', function (err) {
                         console.log(err.stack);
                     });
-                var serviceWriter = new WriterService()
+                var serviceWriter = new WriterTSService()
                 serviceWriter.entidades = entidades;
-                serviceWriter.writeService(writerStream, servico);
-                writerStream.end();
+                serviceWriter.writeService(writerStreamTSService, servico);
+                writerStreamTSService.end();
             }
         })
 

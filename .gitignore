@@ -1,4 +1,5 @@
 node_modules
 dist/*
 src/server/api
+src/cliente/entidade
 src/server/entidade

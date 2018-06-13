@@ -9,7 +9,7 @@ import { PathParam, PathParamTipo } from "./class/PathParam";
 import { WriterUtil } from "./WriterUtil";
 var jsBeautify = require('js-beautify').js_beautify
 
-export class WriterService {
+export class WriterTSService {
     entidades: Entidade[] = [];
     writeService(writeStream: WriteStream, servico: Service) {
         this.getSchemasUtilizados(servico).forEach(schema => {
