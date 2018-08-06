@@ -1,16 +1,15 @@
 import * as fs from "fs";
-import * as JSONStream from "JSONStream";
+import * as jsonstream from "jsonstream";
 import * as es from "event-stream";
 import { Service } from "./class/Service";
 import { UtilService } from "./UtilService";
 import { SwaggerMethodDefinition } from "./class/swagger/SwaggerMethodDefinition";
 import { SwaggerEntidade } from "./class/swagger/SwaggerEntidade";
-import { APIDefinition } from "./class/ApiDefinition";
 import { Entidade } from "./class/Entidade";
-import { Readable, Writable } from "stream";
 import { WriterTSService } from "./WriterTSService";
 import { WriterTSEntity } from "./WriterTSEntity";
 import { AgnularWriterEntityFactory } from "./AgnularWriterEntityFactory";
+import { AngularWriterService } from "./AngularWriterService";
 
 // var swaggerJson = require('./swagger.json')
 
@@ -20,7 +19,7 @@ var servicos: Service[] = []
 var entidades: Entidade[] = [];
 
 var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
-    .pipe(JSONStream.parse(null))
+    .pipe(jsonstream.parse(null))
     .pipe(es.map(function (swaggerJson: any, cb: any) {
         // console.log(data)
         swaggerJson.tags.forEach((tag: any) => {
@@ -60,7 +59,30 @@ var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
             }
         }
 
+        var deleteFolderRecursive = function(path: string) {
+            if (fs.existsSync(path)) {
+              fs.readdirSync(path).forEach(function(file, index){
+                var curPath = path + "/" + file;
+                if (fs.lstatSync(curPath).isDirectory()) { // recurse
+                  deleteFolderRecursive(curPath);
+                } else { // delete file
+                  fs.unlinkSync(curPath);
+                }
+              });
+              fs.rmdirSync(path);
+            }
+          };
+
+          if(fs.existsSync('./src/server')) deleteFolderRecursive('./src/server/api');
+        if(fs.existsSync('./src/server')) deleteFolderRecursive('./src/server/entidade');
+        if(fs.existsSync('./src/cliente')) deleteFolderRecursive('./src/cliente');
         // APOS MAPEAR
+        if(!fs.existsSync('./src/server')) fs.mkdirSync('./src/server')
+        if(!fs.existsSync('./src/server/entidade')) fs.mkdirSync('./src/server/entidade')
+        if(!fs.existsSync('./src/server/api')) fs.mkdirSync('./src/server/api')
+        if(!fs.existsSync('./src/cliente')) fs.mkdirSync('./src/cliente')
+        if(!fs.existsSync('./src/cliente/entidade')) fs.mkdirSync('./src/cliente/entidade')
+        if(!fs.existsSync('./src/cliente/service')) fs.mkdirSync('./src/cliente/service')
 
         entidades.forEach(entidade => {
             var servico = servicos[0];
@@ -88,6 +110,8 @@ var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
 
 
         })
+
+       
         // console.log(JSON.stringify(servicos));
         servicos.forEach(servico => {
             if (servico.apis.length) {
@@ -105,11 +129,27 @@ var stream = fs.createReadStream('swagger-teste.json', { encoding: 'utf8' })
             }
         })
 
+        // console.log(JSON.stringify(servicos));
+        servicos.forEach(servico => {
+            if (servico.apis.length) {
+                var writerStreamTSService = fs.createWriteStream(`./src/cliente/service/${servico.nome}.js`, { flags: 'w' })
+                    .on('finish', function () {
+                        console.log("Write Finish.");
+                    })
+                    .on('error', function (err) {
+                        console.log(err.stack);
+                    });
+                var angularServiceWriter = new AngularWriterService()
+                angularServiceWriter.entidades = entidades;
+                angularServiceWriter.writeService(writerStreamTSService, servico);
+                writerStreamTSService.end();
+            }
+        })
 
 
 
-        // Mark the end of file
-        // });
+
+
         cb(null)
 
     }))

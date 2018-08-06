@@ -36,8 +36,8 @@ export class AgnularWriterEntityFactory {
                     return ${className};
                 }
             }());`
-
-        writeStream.write(template);
+        
+        writeStream.write(jsBeautify(template));
     }
 
 

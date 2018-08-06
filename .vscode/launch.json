@@ -7,17 +7,20 @@
     {
         "type": "node",
         "request": "launch",
-        "name": "Launch Program",
-        "program": "${workspaceFolder}/dist/index.js"
+        "name": "Build",
+        "program": "${workspaceFolder}/dist/index.js",
+        "outFiles": [
+            "${workspaceFolder}/dist/**.js"
+        ]
     },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Program",
-            "program": "${file}",
-            "outFiles": [
-                "${workspaceFolder}/dist/**.js"
-            ]
-        }
+    {
+        "type": "node",
+        "request": "launch",
+        "name": "Launch Program",
+        "program": "${file}",
+        "outFiles": [
+            "${workspaceFolder}/dist/**.js"
+        ]
+    }
     ]
 }

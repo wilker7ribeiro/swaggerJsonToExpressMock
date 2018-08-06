@@ -38,6 +38,9 @@ export class WriterUtil {
     }
 
     static getTypescriptTypingForPropriedade(propriedade: Schema): string {
+        if(!propriedade){
+            return ""
+        }
         if (propriedade.isArray) {
             return `${this.getTypescriptTypingForPropriedade(propriedade.tipoArrayItem)}[]`
         }

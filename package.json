@@ -7,17 +7,17 @@
     "ts": "tsc -p tsconfig.json",
     "ts:watch": "tsc -w -p tsconfig.json",
     "build": "node dist/index",
-    "start": "node server/server",
+    "start": "node dist/server/server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "JSONStream": "^1.3.2",
     "event-stream": "^3.3.4",
     "express": "^4.16.3",
     "glob": "^7.1.2",
     "js-beautify": "^1.7.5",
+    "jsonstream": "^1.0.3",
     "morgan": "^1.9.0",
     "reflect-metadata": "^0.1.12",
     "swagger-js-codegen": "^1.12.0"

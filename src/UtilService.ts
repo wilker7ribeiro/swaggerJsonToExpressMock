@@ -31,8 +31,8 @@ export class UtilService {
 
     static setSchemaTypeBySwaggerPropriedade(propriedade: Schema, swaggerPropridade: SwaggerEntidadePropriedade) {
         propriedade.descricao = swaggerPropridade.description;
-        if (swaggerPropridade.$ref) {
-            propriedade.tipo = this.getEntidadeNameFromRef(swaggerPropridade.$ref)
+        if (swaggerPropridade.$ref || (swaggerPropridade.schema && swaggerPropridade.schema.$ref)) {
+            propriedade.tipo = this.getEntidadeNameFromRef(swaggerPropridade.$ref || swaggerPropridade.schema.$ref)
             propriedade.isObjeto = true;
             return;
         }
